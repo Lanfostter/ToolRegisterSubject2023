@@ -39,6 +39,8 @@ import com.example.demo.dto.SubjectRegistrationDto;
 import com.example.demo.dto.TimeTableDto;
 import com.example.demo.dto.UserDto;
 
+
+
 @Component
 public class ApplicationStartupListener implements ApplicationListener<ContextRefreshedEvent>, InitializingBean {
 	@Autowired
@@ -47,54 +49,44 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		Login login = new Login();
+		List<UserDto> dtos = list("list_student.json");
 		Const.URL_STRING = env.getProperty("url");
 		Const.SEMESTER_STRING = env.getProperty("semester");
-		LoginExtDto loginExtDto = new LoginExtDto();
-		loginExtDto.setUsername("admin");
-		loginExtDto.setPassword("admin");
-		ObjectWriter mapper1 = new ObjectMapper().writer().withDefaultPrettyPrinter();
-		String jsonString1 = null;
-		try {
-			jsonString1 = mapper1.writeValueAsString(loginExtDto);
-		} catch (JsonGenerationException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		} catch (JsonMappingException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		} catch (IOException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-		String logString = login
-				.postLogin(loginExtDto.getUsername(), loginExtDto.getPassword(), "https://" + login.url, jsonString1)
-				.getBody();
-		// danh sách mã sinh viên
-		List<UserDto> dtos = list("list_student.json");
 		for (UserDto dto : dtos) {
 			Thread thread = new Thread(new Runnable() {
 				@Override
 				public void run() {
-					System.out.println(logString);
+					System.out.println(dto.getUsername());
+					LoginExtDto loginExtDto = new LoginExtDto();
+					loginExtDto.setUsername(dto.getUsername());
+					loginExtDto.setPassword(dto.getPassword());
+					ObjectWriter mapper1 = new ObjectMapper().writer().withDefaultPrettyPrinter();
+					String jsonString1 = null;
+					try {
+						jsonString1 = mapper1.writeValueAsString(loginExtDto);
+					} catch (JsonGenerationException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					} catch (JsonMappingException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					} catch (IOException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+					 String logString=login.postLogin(loginExtDto.getUsername(), loginExtDto.getPassword(), "https://" + login.url, jsonString1).getBody();
+					 System.out.println(logString);
 					System.out.println(login.token_type + " " + login.access_token);
 					RegisterSubject subject = new RegisterSubject();
-					Long id = null;
+					Long id =null;
 					try {
-						// sinh viên tự đăng nhập
-//						id = subject.getCurrentUser(login.access_token, login.token_type);
-						// admin đăng ký cho sinh viên
-						id = subject.findStudentByStudentCode(dto.getUsername(), login.access_token, login.token_type);
-					} catch (KeyManagementException | NoSuchAlgorithmException | CertificateException
-							| KeyStoreException | IOException e1) {
+						id = subject.getCurrentUser(login.access_token, login.token_type);
+//						id = subject.findStudentByStudentCode(dto.getUsername(), login.access_token, login.token_type);
+					} catch (KeyManagementException | NoSuchAlgorithmException
+							| CertificateException | KeyStoreException | IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
-					} catch (NoSuchFieldException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
 					} catch (SecurityException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (UnrecoverableKeyException e) {
@@ -103,8 +95,8 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 					}
 					StudentCourseRegisterViewDto studentCourseRegisterViewDto = null;
 					try {
-						studentCourseRegisterViewDto = subject.testRegisterSubject(login.access_token, login.token_type,
-								id);
+						studentCourseRegisterViewDto = subject
+								.testRegisterSubject(login.access_token, login.token_type, id);
 					} catch (UnrecoverableKeyException | KeyManagementException | NoSuchAlgorithmException
 							| CertificateException | KeyStoreException | IOException e1) {
 						// TODO Auto-generated catch block
@@ -115,38 +107,38 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 					for (SubjectRegistrationDto registrationDto : courseRegisterViewDto
 							.getListSubjectRegistrationDtos()) {
 						for (CourseSubjectDto courseSubjectDto : registrationDto.getCourseSubjectDtos()) {
-							ObjectWriter mapper = new ObjectMapper().writer().withDefaultPrettyPrinter();
-							try {
-								String jsonString = mapper.writeValueAsString(courseSubjectDto);
-								System.out.println(courseSubjectDto.getDisplayName());
-								StudentCourseSubjectDto scsDto = subject.addRegister(login.access_token,
-										login.token_type, jsonString, id);
-							} catch (JsonGenerationException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (JsonMappingException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (UnrecoverableKeyException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (KeyManagementException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (NoSuchAlgorithmException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (CertificateException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (KeyStoreException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-
+								ObjectWriter mapper = new ObjectMapper().writer().withDefaultPrettyPrinter();
+								try {
+									String jsonString = mapper.writeValueAsString(courseSubjectDto);
+									System.out.println(courseSubjectDto.getDisplayName());
+									StudentCourseSubjectDto scsDto = subject.addRegister(login.access_token,
+											login.token_type, jsonString, id);
+								} catch (JsonGenerationException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (JsonMappingException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (UnrecoverableKeyException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (KeyManagementException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (NoSuchAlgorithmException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (CertificateException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (KeyStoreException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+			
 						}
 
 					}
@@ -157,7 +149,6 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 			thread.start();
 		}
 	}
-
 	public List<UserDto> list(String fileJson) {
 		Object object;
 		JSONParser jsonParser = new JSONParser();
@@ -189,7 +180,6 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 		return dtos;
 
 	}
-
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		// TODO Auto-generated method stub
